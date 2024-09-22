@@ -25,9 +25,10 @@ class Component{
 
 
 class Tooltip extends Component{
-    constructor(closeNotifierFunction){
-        super();
+    constructor(closeNotifierFunction,text,hostElementId){
+        super(hostElementId);
         this.closeNotifier=closeNotifierFunction;
+        this.text=text;
         this.create();
     }
     closeTooltip(){
@@ -39,7 +40,26 @@ class Tooltip extends Component{
         console.log('The Tooltip....')
         const tooltipElement=document.createElement('div');
         tooltipElement.className='card'
-        tooltipElement.textContent='Dummy!'
+        const tooltipTemplate=document.getElementById('tooltip')
+        const tooltipBody=document.importNode(tooltipTemplate.content,true)
+        tooltipBody.querySelector('p').textContent=this.text;
+        tooltipElement.append(tooltipBody)
+        // tooltipElement.textContent=this.text;
+        console.log(this.hostElement.getBoundingClientRect());
+
+        const hostElposLeft=this.hostElement.offsetLeft
+        const hostElposTop=this.hostElement.offsetTop;
+        const hostElHeight=this.hostElement.clientHeight;
+        const parentElementScrolling=this.hostElement.parentElement.scrollTop //the entire ul
+
+        const x=hostElposLeft+20;
+        const y=hostElposTop+hostElHeight-parentElementScrolling-10;
+
+        tooltipElement.style.position='absolute'
+        tooltipElement.style.left=x+'px';
+        tooltipElement.style.top=y+'px';
+
+
         tooltipElement.addEventListener('click',this.closeTooltip.bind(this))
         this.element=tooltipElement;
     }
@@ -55,7 +75,8 @@ class DOMHelper{
         const element=document.getElementById(ElementId);
         const destinationElement=document.querySelector(newDestinationSelector)
 
-        destinationElement.append(element)
+        destinationElement.append(element);
+        element.scrollIntoView({behavior:'smooth'});
     }
 }
 class ProjectList {
@@ -104,16 +125,19 @@ class ProjectItem {
     if(this.hasActiveTooltip){
         return
     }
+    const projectElement=document.getElementById(this.id)
+    const tooltipText=projectElement.dataset.extraInfo;
+    // projectElement.dataset
     const tooltip=new Tooltip(()=>{
         this.hasActiveTooltip=false;
-    });
+    },tooltipText,this.id);
     tooltip.attach();
     this.hasActiveTooltip=true;
   }
 connectMoreInfoButton(){
     const projectItemElement=document.getElementById(this.id);
     const moreInfoBtn=projectItemElement.querySelector('button:first-of-type')
-    moreInfoBtn.addEventListener('click',this.showMoreInfoHandler)
+    moreInfoBtn.addEventListener('click',this.showMoreInfoHandler.bind(this))
 }
   connectSwitchButton(type){
     const projectItemElement=document.getElementById(this.id)
